@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Jarvis</string>
+    <string name="accessibility_service_description">Jarvis accessibility assistant. Automates clicking Wi-Fi and Bluetooth toggles in Quick Settings upon spoken voice commands.</string>
+</resources>

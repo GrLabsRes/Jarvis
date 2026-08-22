@@ -1,0 +1,6 @@
+{
+  "name": "Jarvis",
+  "description": "An offline-first voice assistant with tiered permissions for local hardware control, offline Speech-to-Text (Vosk), and native Text-to-Speech.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
