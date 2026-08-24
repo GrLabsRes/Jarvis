@@ -111,9 +111,30 @@ fun JarvisAppScreen(viewModel: MainViewModel = viewModel()) {
     var manualCommandText by remember { mutableStateOf("") }
     var activeTab by remember { mutableIntStateOf(0) } // 0: Setup, 1: Console, 2: Notes, 3: Logs
 
-    // Auto-start and bind to service on load
-    LaunchedEffect(Unit) {
-        viewModel.startAndBindService()
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var hasAudioPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                hasAudioPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Auto-start and bind to service on load once permission is granted
+    LaunchedEffect(hasAudioPermission) {
+        if (hasAudioPermission) {
+            viewModel.startAndBindService()
+        }
     }
 
     Scaffold(

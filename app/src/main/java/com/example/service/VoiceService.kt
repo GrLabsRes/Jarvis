@@ -70,8 +70,8 @@ class VoiceService : Service(), TextToSpeech.OnInitListener, RecognitionListener
         // Initialize TTS
         tts = TextToSpeech(this, this)
 
-        // Show foreground notification
-        startForegroundNotification("Jarvis: Starting up...")
+        // Show foreground notification if we have mic permission
+        tryStartForeground("Jarvis: Starting up...")
 
         // Async Vosk model setup
         initVoskModel()
@@ -85,6 +85,10 @@ class VoiceService : Service(), TextToSpeech.OnInitListener, RecognitionListener
         } catch (e: Exception) {
             PermissionTier.BASIC
         }
+
+        // Elevate to foreground if permission has been granted now
+        tryStartForeground("Jarvis: Active and running")
+
         return START_STICKY
     }
 
@@ -272,6 +276,24 @@ class VoiceService : Service(), TextToSpeech.OnInitListener, RecognitionListener
         }
     }
 
+    private fun tryStartForeground(text: String) {
+        val hasMicPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
+        if (hasMicPermission) {
+            try {
+                startForegroundNotification(text)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start foreground service", e)
+            }
+        } else {
+            Log.w(TAG, "RECORD_AUDIO permission not granted. Running as standard background service.")
+        }
+    }
+
     private fun startForegroundNotification(text: String) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
@@ -293,6 +315,14 @@ class VoiceService : Service(), TextToSpeech.OnInitListener, RecognitionListener
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
 
-        startForeground(NOTIFICATION_ID, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 }
